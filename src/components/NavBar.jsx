@@ -2,14 +2,26 @@ import { Link, NavLink } from "react-router";
 import { IoLogoModelS } from "react-icons/io";
 import { GoHomeFill } from "react-icons/go";
 import { IoLogIn, IoLogOut } from "react-icons/io5";
-import { FaGear, FaUser } from "react-icons/fa6";
+import { FaDownload, FaGear, FaUser } from "react-icons/fa6";
 import { LuRotate3D } from "react-icons/lu";
 import { ImBoxAdd } from "react-icons/im";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { FaModx } from "react-icons/fa";
 
 const NavBar = () => {
   const { user, signOutUser } = use(AuthContext);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  useEffect(() => {
+    const html = document.querySelector("html");
+    html.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const handleTheme = (checked) => {
+    setTheme(checked ? "dark" : "light");
+  };
   return (
     <div className="navbar py-0 min-h-0 z-1 shadow-sm rounded-full glass-card max-w-7xl">
       <div className="navbar-start">
@@ -46,6 +58,11 @@ const NavBar = () => {
                 <IoLogoModelS /> All Models
               </NavLink>
             </li>
+            <li>
+              <NavLink to={"/add-model"}>
+                <ImBoxAdd /> Add model
+              </NavLink>
+            </li>
           </ul>
         </div>
         <Link to={"/"} className="flex items-center gap-1 text-xl font-bold">
@@ -67,10 +84,10 @@ const NavBar = () => {
           </li>
           <li>
             <NavLink to={"/add-model"}>
-             <ImBoxAdd /> Add model
+              <ImBoxAdd /> Add model
             </NavLink>
           </li>
-{/* 
+          {/* 
           <li>
             <NavLink to={"/profile"}>
               <FaUser /> Profile
@@ -79,6 +96,12 @@ const NavBar = () => {
         </ul>
       </div>
       <div className="navbar-end gap-3">
+        <input
+          onChange={(e) => handleTheme(e.target.checked)}
+          type="checkbox"
+          defaultChecked={localStorage.getItem("theme") === "dark"}
+          className="toggle"
+        />
         {user ? (
           <div className="dropdown dropdown-end z-50">
             <div
@@ -90,7 +113,10 @@ const NavBar = () => {
                 <img
                   alt="Tailwind CSS Navbar component"
                   referrerPolicy="no-referrer"
-                  src={user.photoURL || "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"}
+                  src={
+                    user.photoURL ||
+                    "https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                  }
                 />
               </div>
             </div>
@@ -107,6 +133,26 @@ const NavBar = () => {
                   <FaUser /> Profile
                 </Link>
               </li>
+
+              <li className="">
+                <Link to={"/my-models"}>
+                  <FaModx /> My Models
+                </Link>
+              </li>
+
+              <li className="">
+                <Link to={"/my-downloads"}>
+                  <FaDownload /> My Downloads
+                </Link>
+              </li>
+
+              {/* <input
+                onChange={(e)=> handleTheme(e.target.checked)}
+                type="checkbox"
+                defaultChecked={localStorage.getItem("theme") === "dark"}
+                className="toggle"
+              /> */}
+
               <li>
                 <a>
                   {" "}

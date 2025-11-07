@@ -1,12 +1,30 @@
-import { Link, useLoaderData, useNavigate } from "react-router";
+import { use, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import Swal from "sweetalert2";
+import { AuthContext } from "../../context/AuthContext";
+import toast from "react-hot-toast";
 
 const ModelDetails = () => {
-  const data = useLoaderData();
-  const model = data.result;
-  console.log(model);
-
   const navigate = useNavigate();
+  const { id } = useParams();
+  const [model, setModel] = useState({});
+  const [loading, setLoading] = useState(true);
+  const { user } = use(AuthContext);
+  const [refetch, setRefetch] = useState(false);
+
+  useEffect(() => {
+    fetch(`https://3d-server-model.vercel.app/models/${id}`, {
+      headers: {
+        authorization: `Bearer ${user.accessToken}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setModel(data.result);
+        console.log(data);
+        setLoading(false);
+      });
+  }, [user, id, refetch]);
 
   const handleDelete = () => {
     Swal.fire({
@@ -19,7 +37,7 @@ const ModelDetails = () => {
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`http://localhost:5000/models/${model._id}`, {
+        fetch(`https://3d-server-model.vercel.app/models/${model._id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -42,6 +60,40 @@ const ModelDetails = () => {
       }
     });
   };
+
+  const handleDownload = () => {
+    const finalModel = {
+      name: model.name,
+      downloads: model.downloads,
+      created_by: model.created_by,
+      description: model.description,
+      thumbnail: model.thumbnail,
+      created_at: new Date(),
+      downloaded_by: user.email,
+    };
+
+    fetch(`https://3d-server-model.vercel.app/downloads/${model._id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(finalModel),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        toast.success("Successfully downloaded!!");
+        setRefetch(!refetch);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  if (loading) {
+    return <div>Loading.......</div>;
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
       <div className="card bg-base-100 shadow-xl border border-gray-200 rounded-2xl overflow-hidden">
@@ -55,22 +107,25 @@ const ModelDetails = () => {
           </div>
 
           <div className="flex flex-col justify-center space-y-4 w-full md:w-1/2">
-            {/* Title */}
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
               {model.name}
             </h1>
 
-            {/* Category Badge */}
-            <div className="badge badge-lg badge-outline text-pink-600 border-pink-600 font-medium">
-              {model.category}
+            <div className="flex gap-3">
+              <div className="badge badge-lg badge-outline text-pink-600 border-pink-600 font-medium">
+                {model.category}
+              </div>
+
+              <div className="badge badge-lg badge-outline text-pink-600 border-pink-600 font-medium">
+                Downloaded:
+                {model.downloads}
+              </div>
             </div>
 
-            {/* Description */}
             <p className="text-gray-600 leading-relaxed text-base md:text-lg">
               {model.description}
             </p>
 
-            {/* Optional: Action Buttons */}
             <div className="flex gap-3 mt-6">
               <Link
                 to={`/update-model/${model._id}`}
@@ -78,7 +133,12 @@ const ModelDetails = () => {
               >
                 Update Model
               </Link>
-              <button className="btn btn-secondary rounded-full">Download</button>
+              <button
+                onClick={handleDownload}
+                className="btn btn-secondary rounded-full"
+              >
+                Download
+              </button>
               <button
                 onClick={handleDelete}
                 className="btn btn-outline rounded-full border-gray-300 hover:border-pink-500 hover:text-pink-600"
